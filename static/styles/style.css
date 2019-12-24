@@ -1,0 +1,75 @@
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+#time {
+    position: absolute;
+    top: 0;
+    left: 15px;
+    font-size: 50px;
+    font-weight: bold;
+    font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+    color: white;
+    background-color: rgba(98, 106, 112, 0.91);
+    padding: 10px;
+    z-index: 2;
+}
+
+.first-line {
+    /*height: 75vh;*/
+    overflow: hidden;
+}
+
+.second-line {
+    /*height: 25vh;*/
+}
+
+.employee-photo {
+    /*height: 75%;*/
+    text-align: center;
+}
+
+.employee-photo img {
+    /*height: 100%;*/
+    max-height: 400px;
+}
+
+.employee-info {
+    padding: 10px;
+    text-align: center;
+}
+
+.employee-name {
+    font-size: 32px;
+    font-family: 'Ubuntu', 'Lucida Grande', 'Lucida Sans Unicode', 'Geneva', 'Verdana', sans-serif;
+    font-weight: bold;
+    font-style: italic;
+
+}
+
+.employee-position {
+    font-size: 24px;
+    font-family: 'Ubuntu', 'Lucida Grande', 'Lucida Sans Unicode', 'Geneva', 'Verdana', sans-serif;
+    font-style: italic;
+}
+
+.recognition-info {
+    font-size: 32px;
+    font-family: 'Ubuntu', 'Lucida Grande', 'Lucida Sans Unicode', 'Geneva', 'Verdana', sans-serif;
+    font-weight: bold;
+    font-style: italic;
+    color: green;
+}
+
+@media screen and (max-width: 1200px) {
+    #time {
+        font-size: 40px;
+    }
+}
+
+@media screen and (max-width: 960px) {
+    #time {
+        font-size: 32px;
+    }
+}
