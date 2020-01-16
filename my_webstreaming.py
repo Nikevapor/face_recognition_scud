@@ -12,6 +12,8 @@ import time
 import cv2
 import numpy as np
 import face_recognition
+import mysql.connector
+from mysql.connector import errorcode
 
 # initialize the output frame and a lock used to ensure thread-safe
 # exchanges of the output frames (useful when multiple browsers/tabs
@@ -25,8 +27,8 @@ app = Flask(__name__)
 # initialize the video stream and allow the camera sensor to
 # warmup
 # vs = VideoStream(usePiCamera=1).start()
-vs = VideoStream(src="http://192.168.0.102:4747/mjpegfeed?960x720").start()
-time.sleep(2.0)
+vs = VideoStream(src="http://192.168.0.101:4747/mjpegfeed?960x720").start()
+time.sleep(3.0)
 
 
 @app.route("/")
@@ -84,21 +86,50 @@ def detect_motion(frameCount):
         with lock:
             outputFrame = frame.copy()
 
+def db_connect():
+    # mydb = mysql.connector.connect(
+    #     host="localhost",
+    #     user="root",
+    #     passwd="1995604H"
+    # )
+#grant all privileges on face_recognition.* to 'aglyamov'@'localhost' identified by '1995604H' with grant option;
+
+    try:
+        cnx = mysql.connector.connect(
+            host='127.0.0.1',
+            user="root",
+            passwd="1995604H",
+            database='face_recognition',
+            #port=8886
+        )
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Something is wrong with your user name or password")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("Database does not exist")
+        else:
+            print(err)
+    else:
+        print(cnx)
+        cnx.close()
+
+
 
 def detect_motion_test():
+    db_connect()
     # grab global references to the video stream, output frame, and
     # lock variables
     global vs, outputFrame, lock
 
     # Load a sample picture and learn how to recognize it.
-    obama_image = face_recognition.load_image_file("obama.jpg")
+    obama_image = face_recognition.load_image_file("photos/obama.jpg")
     obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
     # Load a second sample picture and learn how to recognize it.
-    biden_image = face_recognition.load_image_file("biden.jpg")
+    biden_image = face_recognition.load_image_file("photos/biden.jpg")
     biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
-    rafa_image = face_recognition.load_image_file("Рафаэль.jpg")
+    rafa_image = face_recognition.load_image_file("photos/Rafael.jpg")
     rafa_face_encoding = face_recognition.face_encodings(rafa_image)[0]
 
     # Create arrays of known face encodings and their names
