@@ -225,6 +225,7 @@ def detect_motion_test():
         with lock:
             outputFrame = frame.copy()
 
+
 def generate():
     # grab global references to the output frame and lock variables
     global outputFrame, lock
@@ -255,6 +256,27 @@ def video_feed():
     # return the response generated along with the specific media
     # type (mime type)
     return Response(generate(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+
+
+@app.route("/upload_employee")
+def upload_employee():
+    # return the response generated along with the specific media
+    # type (mime type)
+    return render_template("upload_employee.html")
+
+
+@app.route("/registered_employees")
+def registered_employees():
+    # return the response generated along with the specific media
+    # type (mime type)
+    return render_template("registered_employees.html")
+
+
+@app.route("/detected_employees")
+def detected_employees():
+    # return the response generated along with the specific media
+    # type (mime type)
+    return render_template("detected_employees.html")
 
 
 # check to see if this is the main thread of execution

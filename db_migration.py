@@ -5,32 +5,35 @@ from mysql.connector import errorcode
 DB_NAME = 'face_recognition'
 
 TABLES = {}
-TABLES['faces'] = (
-    "CREATE TABLE `faces` ("
+TABLES['employees'] = (
+    "CREATE TABLE `employees` ("
     "  `id` int(11) NOT NULL AUTO_INCREMENT,"
     "  `name` varchar(128) NOT NULL,"
+    "  `position` varchar(128),"
     "  `photo` varchar(128) NOT NULL,"
-    "  `encoding` blob NOT NULL,"
+    "  `encoding_file` varchar(128) NOT NULL,"
     "  `created_date` datetime NOT NULL,"
     "  `updated_date` datetime NOT NULL,"
-    "  PRIMARY KEY (`id`), UNIQUE KEY `faces_name` (`name`)"
+    "  PRIMARY KEY (`id`), UNIQUE KEY `employees_name` (`name`)"
     ") ENGINE=InnoDB")
 
 TABLES['detections'] = (
     "CREATE TABLE `detections` ("
     "  `id` int(11) NOT NULL AUTO_INCREMENT,"
     "  `date` datetime NOT NULL,"
-    "  `face_id` int(11) NOT NULL,"
+    "  `photo` varchar(128) NOT NULL,"
+    "  `employee_id` int(11),"
+    "  `accuracy` float,"
     "  PRIMARY KEY (`id`),"
-    "  CONSTRAINT `fk_detection_faces` FOREIGN KEY (`face_id`) "
-    "     REFERENCES `faces` (`id`) ON DELETE CASCADE"
+    "  CONSTRAINT `fk_detection_employees` FOREIGN KEY (`employee_id`) "
+    "     REFERENCES `faces` (`employees`) ON DELETE CASCADE"
     ") ENGINE=InnoDB")
 
 cnx = mysql.connector.connect(
     host='localhost',
     user="root",
-    passwd="1995604H",
-    db="face_recognition"
+    passwd="1995604",
+    # db="face_recognition"
     # port=8886
 )
 cursor = cnx.cursor()

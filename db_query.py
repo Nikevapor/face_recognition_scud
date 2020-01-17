@@ -1,21 +1,36 @@
 import datetime
-import mysql.connector
 
-cnx = mysql.connector.connect(user='scott', database='employees')
+import face_recognition
+import mysql.connector
+import numpy
+
+
+cnx = mysql.connector.connect(
+    host='localhost',
+    user="root",
+    passwd="1995604",
+    db="face_recognition"
+    # port=8886
+)
 cursor = cnx.cursor()
 
-# The task is to select all employees hired in the year 1999 and print their names and hire dates to the console.
-query = ("SELECT first_name, last_name, hire_date FROM employees "
-         "WHERE hire_date BETWEEN %s AND %s")
+query = "SELECT name, photo, encoding FROM faces"
 
-hire_start = datetime.date(1999, 1, 1)
-hire_end = datetime.date(1999, 12, 31)
+cursor.execute(query)
 
-cursor.execute(query, (hire_start, hire_end))
+known_face_encodings = []
+known_face_names = []
+for (employee_name, employee_photo, employee_encoding_file) in cursor:
+    known_face_encodings.append(employee_encoding_file)
+    known_face_names.append(employee_name)
 
-for (first_name, last_name, hire_date) in cursor:
-  print("{}, {} was hired on {:%d %b %Y}".format(
-    last_name, first_name, hire_date))
+    numpy.set_printoptions(precision = 16)
+    b = numpy.loadtxt(employee_encoding_file, dtype = numpy.float64)
+    known_face_encodings.append(b)
+
+
+print(known_face_encodings)
 
 cursor.close()
 cnx.close()
+
