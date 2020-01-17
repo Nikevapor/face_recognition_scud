@@ -1,10 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Список сотрудников{% endblock %}
+
+{% block content %}
+    <div class="page-title">Список сотрудников</div>
+    <div class="table-container">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Имя</th>
+                <th>Должность</th>
+                <th>Фото</th>
+                <th>Дата создания</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Ямаев Сергей</td>
+                <td>инженер</td>
+                <td></td>
+                <td>17.01.2020</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Давлиев Булат</td>
+                <td>инженер</td>
+                <td></td>
+                <td>17.01.2020</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Хамидуллин Фагиль</td>
+                <td>инженер-электроник</td>
+                <td></td>
+                <td>14.01.2020</td>
+            </tr>
+        </table>
+    </div>
+{% endblock %}

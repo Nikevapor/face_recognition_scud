@@ -26,7 +26,7 @@ TABLES['detections'] = (
     "  `accuracy` float,"
     "  PRIMARY KEY (`id`),"
     "  CONSTRAINT `fk_detection_employees` FOREIGN KEY (`employee_id`) "
-    "     REFERENCES `faces` (`employees`) ON DELETE CASCADE"
+    "     REFERENCES `employees` (`id`) ON DELETE CASCADE"
     ") ENGINE=InnoDB")
 
 cnx = mysql.connector.connect(

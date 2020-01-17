@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/reset.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+    <title>{% block title %}{% endblock %} - Система распознавания лиц Танеко</title>
+</head>
+<body>
+
+{% set navigation_bar = [
+('/', 'index', 'Главная'),
+('/registered_employees', 'registered_employees', 'Список сотрудников'),
+('/upload_employee', 'upload_employee', 'Загрузка сотрудников'),
+('/detected_employees', 'detected_employees', 'История распознаваний')
+] -%}
+
+{% set active_page = active_page|default('index') -%}
+
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+    <a class="navbar-brand" href="#">Система распознавания лиц</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+            {% for href, id, caption in navigation_bar %}
+                <li class="nav-item {% if id == active_page %} active {% endif %}">
+                    <a class="nav-link" href="{{ href|e }}">{{ caption|e }}</a>
+                </li>
+            {% endfor %}
+            <!--<li class="nav-item active">-->
+                <!--<a class="nav-link" href="/">Главная</a>-->
+            <!--</li>-->
+            <!--<li class="nav-item">-->
+                <!--<a class="nav-link" href="/registered_employees">Список сотрудников</a>-->
+            <!--</li>-->
+            <!--<li class="nav-item">-->
+                <!--<a class="nav-link {% if active_page == 'upload_employee' %} active {% endif %}" href="/upload_employee">-->
+                    <!--Загрузка сотрудника-->
+                <!--</a>-->
+            <!--</li>-->
+            <!--<li class="nav-item">-->
+                <!--<a class="nav-link" href="/detected_employees">История распознаваний</a>-->
+            <!--</li>-->
+        </ul>
+    </div>
+</nav>
+<div class="conainer">
+    <div class="page-content">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for message in messages %}
+                    <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</div>
+<script src="../static/js/script.js"></script>
+</body>
+</html>

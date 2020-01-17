@@ -3,6 +3,40 @@ html, body {
     overflow: hidden;
 }
 
+.page-title {
+    margin: 15px;
+    font-size: 24px;
+}
+.table-container {
+
+}
+.table-container table {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+.table-container th, .table-container td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+.table-container th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #5794af;
+    color: white;
+}
+.table-container tr:hover {background-color: #ddd;}
+.table-container tr:nth-child(even){background-color: #f2f2f2;}
+
+.flashes li {
+    color: red;
+}
+
+.page-content {
+    padding: 10px 15px;
+}
+
 #time {
     position: absolute;
     top: 0;
