@@ -21,5 +21,8 @@
     background-color: #5794af;
     color: white;
 }
+.table-container img{
+    max-height: 100px;
+}
 .table-container tr:hover {background-color: #ddd;}
 .table-container tr:nth-child(even){background-color: #f2f2f2;}

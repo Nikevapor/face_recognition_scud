@@ -7,40 +7,44 @@
     <div class="container-fluid">
         <div class="row first-line">
             <div class="col-8"><img src="{{ url_for('video_feed') }}" alt=""></div>
-            <div class="col-4">
-                <div class="employee-photo">
-                    <img src="{{ url_for('static',filename='data/' + current_detected[2]) }}" alt="">
+            {% if current_detected %}
+                <div class="col-4">
+                    <div class="employee-photo">
+                        <img src="{{ url_for('static',filename='data/' + current_detected[2]) }}" alt="">
+                    </div>
+                    <div class="employee-info">
+                        <div class="employee-name">{{ current_detected[0] }}</div>
+                        <div class="employee-position">{{ current_detected[1] }}</div>
+                        <div class="recognition-info">
+                            Точность: 93%
+                        </div>
+                    </div>
                 </div>
-                <div class="employee-info">
-                    <div class="employee-name">{{ current_detected[0] }}</div>
-                    <div class="employee-position">{{ current_detected[1] }}</div>
-                    <div class="recognition-info">
-                        Точность: 93%
+            {% endif %}
+        </div>
+        {% if last_four_detected %}
+            <div class="row second-line">
+                <div class="col-3">
+                    <div class="employee-photo">
+                        <img src="../static/images/droidcam-20191224-214717.jpg" alt="">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="employee-photo">
+                        <img src="../static/images/droidcam-20191224-214638.jpg" alt="">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="employee-photo">
+                        <img src="../static/images/droidcam-20191125-220513.jpg" alt="">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="employee-photo">
+                        <img src="../static/images/droidcam-20191224-214638.jpg" alt="">
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row second-line">
-            <div class="col-3">
-                <div class="employee-photo">
-                    <img src="../static/images/droidcam-20191224-214717.jpg" alt="">
-                </div>
-            </div>
-            <div class="col-3">
-                <div class="employee-photo">
-                    <img src="../static/images/droidcam-20191224-214638.jpg" alt="">
-                </div>
-            </div>
-            <div class="col-3">
-                <div class="employee-photo">
-                    <img src="../static/images/droidcam-20191125-220513.jpg" alt="">
-                </div>
-            </div>
-            <div class="col-3">
-                <div class="employee-photo">
-                    <img src="../static/images/droidcam-20191224-214638.jpg" alt="">
-                </div>
-            </div>
-        </div>
+        {% endif %}
     </div>
 {% endblock %}

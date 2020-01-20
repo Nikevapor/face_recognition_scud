@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Список сотрудников{% endblock %}
+{% set active_page = "registered_employees" %}
 
 {% block content %}
     <div class="page-title">Список сотрудников</div>
@@ -16,22 +17,22 @@
             <tr>
                 <td>1</td>
                 <td>Ямаев Сергей</td>
-                <td>инженер</td>
-                <td></td>
+                <td>инженер ЛСС и АУ</td>
+                <td><img src="{{ url_for('static',filename='data/photos/(1)yamaev_sergei.jpg') }}" alt=""></td>
                 <td>17.01.2020</td>
             </tr>
             <tr>
                 <td>2</td>
                 <td>Давлиев Булат</td>
-                <td>инженер</td>
-                <td></td>
+                <td>инженер ЛСС и АУ</td>
+                <td><img src="{{ url_for('static',filename='data/photos/0001004963.jpg') }}" alt=""></td>
                 <td>17.01.2020</td>
             </tr>
             <tr>
                 <td>3</td>
                 <td>Хамидуллин Фагиль</td>
                 <td>инженер-электроник</td>
-                <td></td>
+                <td><img src="{{ url_for('static',filename='data/photos/khamidullin_fagil.jpg') }}" alt=""></td>
                 <td>14.01.2020</td>
             </tr>
         </table>

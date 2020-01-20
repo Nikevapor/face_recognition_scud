@@ -40,7 +40,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 cnx = mysql.connector.connect(
     host='localhost',
     user="root",
-    passwd="1995604",
+    passwd="1995604H",
     db="face_recognition"
     # port=8886
 )
@@ -50,7 +50,7 @@ cursor = cnx.cursor()
 # initialize the video stream and allow the camera sensor to
 # warmup
 # vs = VideoStream(usePiCamera=1).start()
-vs = VideoStream(src="http://192.168.0.101:4747/mjpegfeed?960x720").start()
+vs = VideoStream(src="http://192.168.0.100:4747/mjpegfeed?960x720").start()
 time.sleep(3.0)
 
 
@@ -64,10 +64,16 @@ def index():
             "LIMIT 5"
     cursor.execute(query)
     last_detected_employees = cursor.fetchall()
-    print(last_detected_employees)
-    print(last_detected_employees[0])
+    # print(last_detected_employees)
+    # print(last_detected_employees[0])
+    current_detected = []
+    last_four_detected = []
+    if (len(last_detected_employees) > 0):
+        current_detected = last_detected_employees[0]
+    if (len(last_detected_employees) > 4):
+        last_four_detected = last_detected_employees[1:]
 
-    return render_template("index.html", current_detected = last_detected_employees[0], last_four_detected = last_detected_employees[1:])
+    return render_template("index.html", current_detected = current_detected, last_four_detected = last_four_detected)
 
 
 @app.route("/video_feed")
@@ -381,9 +387,9 @@ if __name__ == '__main__':
     # start a thread that will perform motion detection
     # t = threading.Thread(target=detect_motion, args=(
     #     args["frame_count"],))
-    # t = threading.Thread(target=detect_motion)
-    # t.daemon = True
-    # t.start()
+    t = threading.Thread(target=detect_motion)
+    t.daemon = True
+    t.start()
 
     # start the flask app
     app.run(host=args["ip"], port=args["port"], debug=True,
