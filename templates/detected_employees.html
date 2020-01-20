@@ -14,27 +14,15 @@
                 <th>Предполагаемый сотрудник</th>
                 <th>Точность</th>
             </tr>
-            <tr>
-                <td>1</td>
-                <td>17.01.2020</td>
-                <td></td>
-                <td>Ямаев Сергей  - инженер </td>
-                <td>90%</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>17.01.2020</td>
-                <td></td>
-                <td>Ямаев Сергей - инженер</td>
-                <td>90%</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>17.01.2020</td>
-                <td></td>
-                <td>Ямаев Сергей - инженер</td>
-                <td>90%</td>
-            </tr>
+            {% for employee in detected_employees %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ employee[0] }}</td>
+                    <td><img src="{{ url_for('static',filename='data/detection_photos/' + employee[1]) }}" alt=""></td>
+                    <td>{{ employee[2] }}</td>
+                    <td></td>
+                </tr>
+            {% endfor %}
         </table>
     </div>
 {% endblock %}

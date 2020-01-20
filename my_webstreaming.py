@@ -17,12 +17,13 @@ import cv2
 import numpy as np
 import face_recognition
 import mysql.connector
-from werkzeug.utils import redirect, secure_filename
+from werkzeug.utils import redirect
 from mysql.connector import errorcode
 
 
-UPLOAD_FOLDER = 'static/data/photos/'
+PHOTO_UPLOAD_FOLDER = 'static/data/photos/'
 ENCODING_UPLOAD_FOLDER = 'static/data/encoding/'
+DETECTION_UPLOAD_FOLDER = 'static/data/detection_photos/'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 # initialize the output frame and a lock used to ensure thread-safe
@@ -35,12 +36,11 @@ lock = threading.Lock()
 # initialize a flask object
 app = Flask(__name__)
 app.secret_key = "super secret key"
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 cnx = mysql.connector.connect(
     host='localhost',
     user="root",
-    passwd="1995604H",
+    passwd="1995604",
     db="face_recognition"
     # port=8886
 )
@@ -73,7 +73,7 @@ def index():
     if (len(last_detected_employees) > 4):
         last_four_detected = last_detected_employees[1:]
 
-    return render_template("index.html", current_detected = current_detected, last_four_detected = last_four_detected)
+    return render_template("index.html", current_detected=current_detected, last_four_detected=last_four_detected)
 
 
 @app.route("/video_feed")
@@ -103,7 +103,8 @@ def upload_employee():
         if file and allowed_file(file.filename):
             filename, file_extension = os.path.splitext(file.filename)
             new_filename = generate_filename()
-            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename + file_extension)
+            photo_filename = new_filename + file_extension
+            photo_path = os.path.join(PHOTO_UPLOAD_FOLDER, photo_filename)
             file.save(photo_path)
 
             image = face_recognition.load_image_file(photo_path)
@@ -115,17 +116,15 @@ def upload_employee():
                 os.remove(photo_path)
                 return redirect(request.url)
 
-            # rafa_image = face_recognition.load_image_file("photos/Rafael.jpg")
-            # rafa_face_encoding = face_recognition.face_encodings(rafa_image)[0]
-
-            employee_encoding_file = ENCODING_UPLOAD_FOLDER + new_filename + ".txt"
-            np.savetxt(employee_encoding_file, encoding, fmt='%r')
+            encoding_filename = new_filename + ".txt"
+            encoding_path = ENCODING_UPLOAD_FOLDER + encoding_filename
+            np.savetxt(encoding_path, encoding, fmt='%r')
 
             now = time.strftime('%Y-%m-%d %H:%M:%S')
             add_employee = ("INSERT INTO employees "
                             "(`name`, `position`, `photo`, `encoding_file`, `created_date`, `updated_date`) "
                             "VALUES (%s, %s, %s, %s, %s, %s)")
-            data_employee = (name, position, photo_path, employee_encoding_file, now, now)
+            data_employee = (name, position, photo_filename, encoding_filename, now, now)
             cursor.execute(add_employee, data_employee)
             cnx.commit()
 
@@ -136,17 +135,30 @@ def upload_employee():
 
 @app.route("/registered_employees")
 def registered_employees():
+    global cursor
+    query = "SELECT name, position, photo, created_date FROM employees " \
+            "ORDER BY `created_date` DESC "
+    cursor.execute(query)
+    employees = cursor.fetchall()
+
     # return the response generated along with the specific media
     # type (mime type)
-    return render_template("registered_employees.html")
+    return render_template("registered_employees.html", employees=employees)
 
 
 @app.route("/detected_employees")
 def detected_employees():
+    global cursor
+    query = "SELECT detections.`date`, detections.photo, CONCAT(name, ' - ', position) as employee_info FROM detections " \
+            "LEFT JOIN employees ON employees.id = detections.employee_id " \
+            "ORDER BY detections.`date` DESC " \
+            "LIMIT 5"
+    cursor.execute(query)
+    detected_employees = cursor.fetchall()
     # return the response generated along with the specific media
     # type (mime type)
 
-    return render_template("detected_employees.html")
+    return render_template("detected_employees.html", detected_employees=detected_employees)
 
 
 def allowed_file(filename):
@@ -207,63 +219,76 @@ def generate_filename():
 #         with lock:
 #             outputFrame = frame.copy()
 
-def db_connect():
-    # mydb = mysql.connector.connect(
-    #     host="localhost",
-    #     user="root",
-    #     passwd="1995604H"
-    # )
-#grant all privileges on face_recognition.* to 'aglyamov'@'localhost' identified by '1995604H' with grant option;
 
-    try:
-        cnx = mysql.connector.connect(
-            host='127.0.0.1',
-            user="root",
-            passwd="1995604H",
-            database='face_recognition',
-            #port=8886
-        )
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist")
-        else:
-            print(err)
-    else:
-        print(cnx)
-        cnx.close()
-
+# def db_connect():
+#     # mydb = mysql.connector.connect(
+#     #     host="localhost",
+#     #     user="root",
+#     #     passwd="1995604H"
+#     # )
+# #grant all privileges on face_recognition.* to 'aglyamov'@'localhost' identified by '1995604H' with grant option;
+#
+#     try:
+#         cnx = mysql.connector.connect(
+#             host='127.0.0.1',
+#             user="root",
+#             passwd="1995604H",
+#             database='face_recognition',
+#             #port=8886
+#         )
+#     except mysql.connector.Error as err:
+#         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+#             print("Something is wrong with your user name or password")
+#         elif err.errno == errorcode.ER_BAD_DB_ERROR:
+#             print("Database does not exist")
+#         else:
+#             print(err)
+#     else:
+#         print(cnx)
+#         cnx.close()
 
 
 def detect_motion():
-    db_connect()
+    # db_connect()
     # grab global references to the video stream, output frame, and
     # lock variables
-    global vs, outputFrame, lock
+    global vs, outputFrame, lock, cursor
 
-    # Load a sample picture and learn how to recognize it.
-    obama_image = face_recognition.load_image_file("photos/obama.jpg")
-    obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+    query = "SELECT name, photo, encoding_file FROM employees " \
+            "ORDER BY `created_date` DESC "
+    cursor.execute(query)
+    employees = cursor.fetchall
 
-    # Load a second sample picture and learn how to recognize it.
-    biden_image = face_recognition.load_image_file("photos/biden.jpg")
-    biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+    # # Load a sample picture and learn how to recognize it.
+    # obama_image = face_recognition.load_image_file("photos/obama.jpg")
+    # obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+    #
+    # # Load a second sample picture and learn how to recognize it.
+    # biden_image = face_recognition.load_image_file("photos/biden.jpg")
+    # biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+    #
+    # rafa_image = face_recognition.load_image_file("photos/Rafael.jpg")
+    # rafa_face_encoding = face_recognition.face_encodings(rafa_image)[0]
 
-    rafa_image = face_recognition.load_image_file("photos/Rafael.jpg")
-    rafa_face_encoding = face_recognition.face_encodings(rafa_image)[0]
+    # # Create arrays of known face encodings and their names
+    # known_face_encodings = [
+    #     obama_face_encoding,
+    #     biden_face_encoding,
+    #     rafa_face_encoding
+    # ]
+    # known_face_names = [
+    #     "Barack Obama",
+    #     "Joe Biden",
+    #     "Rafael"
+    # ]
 
-    # Create arrays of known face encodings and their names
-    known_face_encodings = [
-        obama_face_encoding,
-        biden_face_encoding,
-        rafa_face_encoding
-    ]
-    known_face_names = [
-        "Barack Obama",
-        "Joe Biden",
-        "Rafael"
-    ]
+    known_face_encodings = []
+    known_face_names = []
+    for (employee_name, employee_photo, employee_encoding_file) in employees:
+        known_face_names.append(employee_name)
+        np.set_printoptions(precision=16)
+        enc = np.loadtxt(ENCODING_UPLOAD_FOLDER + employee_encoding_file, dtype = np.float64)
+        known_face_encodings.append(enc)
 
     # Initialize some variables
     face_locations = []
@@ -387,9 +412,9 @@ if __name__ == '__main__':
     # start a thread that will perform motion detection
     # t = threading.Thread(target=detect_motion, args=(
     #     args["frame_count"],))
-    t = threading.Thread(target=detect_motion)
-    t.daemon = True
-    t.start()
+    # t = threading.Thread(target=detect_motion)
+    # t.daemon = True
+    # t.start()
 
     # start the flask app
     app.run(host=args["ip"], port=args["port"], debug=True,
