@@ -32,7 +32,7 @@ TABLES['detections'] = (
 cnx = mysql.connector.connect(
     host='localhost',
     user="root",
-    passwd="1995604",
+    passwd="1995604H",
     # db="face_recognition"
     # port=8886
 )
@@ -65,6 +65,7 @@ for table_name in TABLES:
     try:
         print("Creating table {}: ".format(table_name), end='')
         cursor.execute(table_description)
+        cursor.execute("alter table {} CONVERT TO CHARACTER SET utf8".format(table_name))
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
             print("already exists.")

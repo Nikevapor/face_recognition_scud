@@ -3,18 +3,24 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-    <div id="time"></div>
     <div class="container-fluid">
         <div class="row first-line">
-            <div class="col-8"><img src="{{ url_for('video_feed') }}" alt=""></div>
+            <div class="col-8"><img src="{{ url_for('video_feed') }}" alt="">
+                <div id="time"></div>
+            </div>
             {% if current_detected %}
                 <div class="col-4">
                     <div class="employee-photo">
-                        <img src="{{ url_for('static',filename='data/' + current_detected[2]) }}" alt="">
+                        {% if current_detected[2] %}
+                            <img src="{{ url_for('static',filename='data/' + current_detected[2]) }}" alt="">
+                        {% else %}
+                            <img src="{{ url_for('static',filename='images/png-employee-account-avatar-business-colleague-employee-female-group-human-512.png') }}"
+                                 alt="">
+                        {% endif %}
                     </div>
                     <div class="employee-info">
-                        <div class="employee-name">{{ current_detected[0] }}</div>
-                        <div class="employee-position">{{ current_detected[1] }}</div>
+                        <div class="employee-name">{{ current_detected[0] if current_detected[0] else "Неизвестный" }}</div>
+                        <div class="employee-position">{{ current_detected[1] if current_detected[1] else "" }}</div>
                         <div class="recognition-info">
                             Точность: 93%
                         </div>

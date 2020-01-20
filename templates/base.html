@@ -34,33 +34,17 @@
                     <a class="nav-link" href="{{ href|e }}">{{ caption|e }}</a>
                 </li>
             {% endfor %}
-            <!--<li class="nav-item active">-->
-                <!--<a class="nav-link" href="/">Главная</a>-->
-            <!--</li>-->
-            <!--<li class="nav-item">-->
-                <!--<a class="nav-link" href="/registered_employees">Список сотрудников</a>-->
-            <!--</li>-->
-            <!--<li class="nav-item">-->
-                <!--<a class="nav-link {% if active_page == 'upload_employee' %} active {% endif %}" href="/upload_employee">-->
-                    <!--Загрузка сотрудника-->
-                <!--</a>-->
-            <!--</li>-->
-            <!--<li class="nav-item">-->
-                <!--<a class="nav-link" href="/detected_employees">История распознаваний</a>-->
-            <!--</li>-->
         </ul>
     </div>
 </nav>
 <div class="conainer">
     <div class="page-content">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <ul class="flashes">
-                    {% for message in messages %}
-                    <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}"> {{ message|capitalize }} </div>
+            {% endfor %}
+          {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}

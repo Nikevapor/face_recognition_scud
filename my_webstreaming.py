@@ -1,6 +1,7 @@
 # import the necessary packages
 # from pyimagesearch.motion_detection import SingleMotionDetector
 import os
+import sys
 import uuid
 
 from imutils.video import VideoStream
@@ -37,41 +38,79 @@ lock = threading.Lock()
 app = Flask(__name__)
 app.secret_key = "super secret key"
 
-cnx = mysql.connector.connect(
-    host='localhost',
-    user="root",
-    passwd="1995604",
-    db="face_recognition"
-    # port=8886
-)
+try:
+    cnx = mysql.connector.connect(
+        host='localhost',
+        user="root",
+        passwd="1995604H",
+        db="face_recognition"
+        # port=8886
+    )
 
-cursor = cnx.cursor()
+    cnx.autocommit = True
+    cursor = cnx.cursor()
+except mysql.connector.Error as err:
+    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        print("В доступе к БД отказано")
+    elif err.errno == errorcode.ER_BAD_DB_ERROR:
+        print("База данных не сущесвует")
+    else:
+        print(err)
+
+    sys.exit()
+
+
+known_face_encodings = []
+known_face_names = []
+
+query = "SELECT `name`, photo, encoding_file FROM employees " \
+        "ORDER BY `created_date` DESC "
+cursor.execute(query)
+
+for (employee_name, employee_photo, employee_encoding_file) in cursor:
+    known_face_names.append(employee_name)
+    np.set_printoptions(precision=16)
+    enc = np.loadtxt(ENCODING_UPLOAD_FOLDER + employee_encoding_file, dtype=np.float64)
+    known_face_encodings.append(enc)
 
 # initialize the video stream and allow the camera sensor to
 # warmup
 # vs = VideoStream(usePiCamera=1).start()
-vs = VideoStream(src="http://192.168.0.100:4747/mjpegfeed?960x720").start()
+vs = VideoStream(src="http://192.168.0.102:4747/mjpegfeed?960x720").start()
 time.sleep(3.0)
 
 
 @app.route("/")
 @app.route("/index")
 def index():
-    global cursor
+    global cursor, known_face_encodings, known_face_names
     query = "SELECT name, position, employees.photo, encoding_file FROM detections " \
             "LEFT JOIN employees ON employees.id = detections.employee_id " \
             "ORDER BY detections.`date` DESC " \
             "LIMIT 5"
     cursor.execute(query)
     last_detected_employees = cursor.fetchall()
-    # print(last_detected_employees)
-    # print(last_detected_employees[0])
+
     current_detected = []
     last_four_detected = []
     if (len(last_detected_employees) > 0):
         current_detected = last_detected_employees[0]
     if (len(last_detected_employees) > 4):
         last_four_detected = last_detected_employees[1:]
+
+
+    known_face_encodings = []
+    known_face_names = []
+
+    query = "SELECT `name`, photo, encoding_file FROM employees " \
+            "ORDER BY `created_date` DESC "
+    cursor.execute(query)
+
+    for (employee_name, employee_photo, employee_encoding_file) in cursor:
+        known_face_names.append(employee_name)
+        np.set_printoptions(precision=16)
+        enc = np.loadtxt(ENCODING_UPLOAD_FOLDER + employee_encoding_file, dtype=np.float64)
+        known_face_encodings.append(enc)
 
     return render_template("index.html", current_detected=current_detected, last_four_detected=last_four_detected)
 
@@ -92,13 +131,13 @@ def upload_employee():
 
         # check if the post request has the file part
         if 'file' not in request.files:
-            flash('Ошибка формы')
+            flash('Ошибка формы', 'danger')
             return redirect(request.url)
         file = request.files['file']
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == '':
-            flash('Файл не выбран')
+            flash('Файл не выбран', 'danger')
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename, file_extension = os.path.splitext(file.filename)
@@ -112,7 +151,7 @@ def upload_employee():
             if len(encoding) > 0:
                 encoding = encoding[0]
             else:
-                flash("Лицо на фото не найдено")
+                flash("Лицо на фото не найдено", "danger")
                 os.remove(photo_path)
                 return redirect(request.url)
 
@@ -120,15 +159,21 @@ def upload_employee():
             encoding_path = ENCODING_UPLOAD_FOLDER + encoding_filename
             np.savetxt(encoding_path, encoding, fmt='%r')
 
-            now = time.strftime('%Y-%m-%d %H:%M:%S')
-            add_employee = ("INSERT INTO employees "
-                            "(`name`, `position`, `photo`, `encoding_file`, `created_date`, `updated_date`) "
-                            "VALUES (%s, %s, %s, %s, %s, %s)")
-            data_employee = (name, position, photo_filename, encoding_filename, now, now)
-            cursor.execute(add_employee, data_employee)
-            cnx.commit()
-
-            print(name, position, filename)
+            try:
+                now = time.strftime('%Y-%m-%d %H:%M:%S')
+                add_employee = ("INSERT INTO employees "
+                                "(`name`, `position`, `photo`, `encoding_file`, `created_date`, `updated_date`) "
+                                "VALUES (%s, %s, %s, %s, %s, %s)")
+                data_employee = (name, position, photo_filename, encoding_filename, now, now)
+                cursor.execute(add_employee, data_employee)
+                cnx.commit()
+            except mysql.connector.Error as err:
+                if err.errno == errorcode.ER_DUP_ENTRY:
+                    flash("Это имя уже существует в базе данных", "danger")
+                else:
+                    flash(err, "error")
+            else:
+                flash("Сотрудник был успешно добавлен", "success")
 
     return render_template("upload_employee.html")
 
@@ -168,6 +213,16 @@ def allowed_file(filename):
 
 def generate_filename():
     return str(uuid.uuid4())
+
+
+def find_employee_id_by_name(name):
+    query = ("SELECT id, name, position, photo FROM employees "
+             "WHERE `name` LIKE %s")
+    cursor.execute(query, (name,))
+    employee = cursor.fetchone()
+    if cursor.rowcount == 0:
+        return None
+    return employee[0]
 
 
 # def detect_motion(frameCount):
@@ -220,81 +275,19 @@ def generate_filename():
 #             outputFrame = frame.copy()
 
 
-# def db_connect():
-#     # mydb = mysql.connector.connect(
-#     #     host="localhost",
-#     #     user="root",
-#     #     passwd="1995604H"
-#     # )
-# #grant all privileges on face_recognition.* to 'aglyamov'@'localhost' identified by '1995604H' with grant option;
-#
-#     try:
-#         cnx = mysql.connector.connect(
-#             host='127.0.0.1',
-#             user="root",
-#             passwd="1995604H",
-#             database='face_recognition',
-#             #port=8886
-#         )
-#     except mysql.connector.Error as err:
-#         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-#             print("Something is wrong with your user name or password")
-#         elif err.errno == errorcode.ER_BAD_DB_ERROR:
-#             print("Database does not exist")
-#         else:
-#             print(err)
-#     else:
-#         print(cnx)
-#         cnx.close()
-
-
 def detect_motion():
     # db_connect()
     # grab global references to the video stream, output frame, and
     # lock variables
-    global vs, outputFrame, lock, cursor
-
-    query = "SELECT name, photo, encoding_file FROM employees " \
-            "ORDER BY `created_date` DESC "
-    cursor.execute(query)
-    employees = cursor.fetchall
-
-    # # Load a sample picture and learn how to recognize it.
-    # obama_image = face_recognition.load_image_file("photos/obama.jpg")
-    # obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
-    #
-    # # Load a second sample picture and learn how to recognize it.
-    # biden_image = face_recognition.load_image_file("photos/biden.jpg")
-    # biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
-    #
-    # rafa_image = face_recognition.load_image_file("photos/Rafael.jpg")
-    # rafa_face_encoding = face_recognition.face_encodings(rafa_image)[0]
-
-    # # Create arrays of known face encodings and their names
-    # known_face_encodings = [
-    #     obama_face_encoding,
-    #     biden_face_encoding,
-    #     rafa_face_encoding
-    # ]
-    # known_face_names = [
-    #     "Barack Obama",
-    #     "Joe Biden",
-    #     "Rafael"
-    # ]
-
-    known_face_encodings = []
-    known_face_names = []
-    for (employee_name, employee_photo, employee_encoding_file) in employees:
-        known_face_names.append(employee_name)
-        np.set_printoptions(precision=16)
-        enc = np.loadtxt(ENCODING_UPLOAD_FOLDER + employee_encoding_file, dtype = np.float64)
-        known_face_encodings.append(enc)
+    global vs, outputFrame, lock, cursor, known_face_encodings, known_face_names
 
     # Initialize some variables
     face_locations = []
     face_encodings = []
     face_names = []
     process_this_frame = True
+    possible_detections = {}
+    last_detection = ""
 
     while True:
         # Grab a single frame of video
@@ -329,9 +322,37 @@ def detect_motion():
                 if matches[best_match_index]:
                     name = known_face_names[best_match_index]
 
+                print(possible_detections)
+                print(name)
                 face_names.append(name)
+                if name in possible_detections:
+                    possible_detections[name] += 1
+                else:
+                    possible_detections[name] = 1
+
+                print(possible_detections)
 
         process_this_frame = not process_this_frame
+
+        print(possible_detections)
+        if possible_detections:
+            possible_name = max(possible_detections, key=possible_detections.get)
+            if (possible_detections[possible_name] > 20) & (last_detection != possible_name):
+                new_filename = generate_filename()
+                photo_filename = new_filename + ".jpg"
+                photo_path = os.path.join(DETECTION_UPLOAD_FOLDER, photo_filename)
+                cv2.imwrite(photo_path, frame) #возможно не совсем правильно
+
+                now = time.strftime('%Y-%m-%d %H:%M:%S')
+                add_detection = ("INSERT INTO detections "
+                                "(`date`, `employee_id`, `photo`) "
+                                "VALUES (%s, %s, %s)")
+                print(find_employee_id_by_name)
+                data_employee = (now, find_employee_id_by_name(possible_name), photo_filename)
+                cursor.execute(add_detection, data_employee)
+                cnx.commit()
+                possible_detections = {}
+                last_detection = possible_name
 
         # Display the results
         for (top, right, bottom, left), name in zip(face_locations, face_names):
@@ -370,7 +391,6 @@ def detect_motion():
 
         with lock:
             outputFrame = frame.copy()
-
 
 def generate():
     # grab global references to the output frame and lock variables
@@ -412,9 +432,9 @@ if __name__ == '__main__':
     # start a thread that will perform motion detection
     # t = threading.Thread(target=detect_motion, args=(
     #     args["frame_count"],))
-    # t = threading.Thread(target=detect_motion)
-    # t.daemon = True
-    # t.start()
+    t = threading.Thread(target=detect_motion)
+    t.daemon = True
+    t.start()
 
     # start the flask app
     app.run(host=args["ip"], port=args["port"], debug=True,
