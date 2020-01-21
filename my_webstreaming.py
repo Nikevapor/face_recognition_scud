@@ -1,5 +1,6 @@
 # import the necessary packages
 # from pyimagesearch.motion_detection import SingleMotionDetector
+import json
 import os
 import sys
 import uuid
@@ -76,8 +77,25 @@ for (employee_name, employee_photo, employee_encoding_file) in cursor:
 # initialize the video stream and allow the camera sensor to
 # warmup
 # vs = VideoStream(usePiCamera=1).start()
-vs = VideoStream(src="http://192.168.0.102:4747/mjpegfeed?960x720").start()
+vs = VideoStream(src="http://192.168.0.101:4747/mjpegfeed?960x720").start()
 time.sleep(3.0)
+
+
+@app.route('/test')
+def test():
+    return render_template('test.html')
+
+
+@app.route('/get_len', methods=['GET', 'POST'])
+def get_len():
+    name = request.form['name']
+    return json.dumps({'len': len(name)})
+
+
+@app.route('/get_last_detections', methods=['GET'])
+def get_last_detections():
+    name = request.form['name']
+    return json.dumps({'len': len(name)})
 
 
 @app.route("/")
@@ -95,7 +113,7 @@ def index():
     last_four_detected = []
     if (len(last_detected_employees) > 0):
         current_detected = last_detected_employees[0]
-    if (len(last_detected_employees) > 4):
+    if (len(last_detected_employees) > 1):
         last_four_detected = last_detected_employees[1:]
 
 
@@ -287,8 +305,8 @@ def detect_motion():
     face_names = []
     process_this_frame = True
     possible_detections = {}
-    last_detection = ""
 
+    start = time.time()
     while True:
         # Grab a single frame of video
         frame = vs.read()
@@ -318,41 +336,57 @@ def detect_motion():
 
                 # Or instead, use the known face with the smallest distance to the new face
                 face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-                best_match_index = np.argmin(face_distances)
-                if matches[best_match_index]:
-                    name = known_face_names[best_match_index]
+                if face_distances.size > 0:
+                    best_match_index = np.argmin(face_distances)
+                    if matches[best_match_index]:
+                        name = known_face_names[best_match_index]
 
-                print(possible_detections)
-                print(name)
                 face_names.append(name)
                 if name in possible_detections:
                     possible_detections[name] += 1
                 else:
                     possible_detections[name] = 1
 
-                print(possible_detections)
-
         process_this_frame = not process_this_frame
 
         print(possible_detections)
+        end = time.time()
         if possible_detections:
-            possible_name = max(possible_detections, key=possible_detections.get)
-            if (possible_detections[possible_name] > 20) & (last_detection != possible_name):
-                new_filename = generate_filename()
-                photo_filename = new_filename + ".jpg"
-                photo_path = os.path.join(DETECTION_UPLOAD_FOLDER, photo_filename)
-                cv2.imwrite(photo_path, frame) #возможно не совсем правильно
+            if end - start > 5:
+                start = time.time()
+                # possible_name = max(possible_detections, key=possible_detections.get)
+                for detection in possible_detections:
+                    if possible_detections[detection] > 30:
+                        new_filename = generate_filename()
+                        photo_filename = new_filename + ".jpg"
+                        photo_path = os.path.join(DETECTION_UPLOAD_FOLDER, photo_filename)
+                        cv2.imwrite(photo_path, frame)  # возможно не совсем правильно
 
-                now = time.strftime('%Y-%m-%d %H:%M:%S')
-                add_detection = ("INSERT INTO detections "
-                                "(`date`, `employee_id`, `photo`) "
-                                "VALUES (%s, %s, %s)")
-                print(find_employee_id_by_name)
-                data_employee = (now, find_employee_id_by_name(possible_name), photo_filename)
-                cursor.execute(add_detection, data_employee)
-                cnx.commit()
+                        now = time.strftime('%Y-%m-%d %H:%M:%S')
+                        add_detection = ("INSERT INTO detections "
+                                         "(`date`, `employee_id`, `photo`) "
+                                         "VALUES (%s, %s, %s)")
+                        print(find_employee_id_by_name)
+                        data_employee = (now, find_employee_id_by_name(detection), photo_filename)
+                        cursor.execute(add_detection, data_employee)
+                        cnx.commit()
+
+                # if possible_detections[possible_name] > 30:
+                #     new_filename = generate_filename()
+                #     photo_filename = new_filename + ".jpg"
+                #     photo_path = os.path.join(DETECTION_UPLOAD_FOLDER, photo_filename)
+                #     cv2.imwrite(photo_path, frame) #возможно не совсем правильно
+                #
+                #     now = time.strftime('%Y-%m-%d %H:%M:%S')
+                #     add_detection = ("INSERT INTO detections "
+                #                     "(`date`, `employee_id`, `photo`) "
+                #                     "VALUES (%s, %s, %s)")
+                #     print(find_employee_id_by_name)
+                #     data_employee = (now, find_employee_id_by_name(possible_name), photo_filename)
+                #     cursor.execute(add_detection, data_employee)
+                #     cnx.commit()
+
                 possible_detections = {}
-                last_detection = possible_name
 
         # Display the results
         for (top, right, bottom, left), name in zip(face_locations, face_names):

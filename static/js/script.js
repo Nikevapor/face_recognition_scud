@@ -20,3 +20,15 @@ function startTime() {
 }
 
 startTime();
+get_last_detections();
+function get_last_detections(){
+    var feedback = $.ajax({
+        type: "GET",
+        url: "/get_last_detections",
+        async: false
+    }).complete(function(){
+        setTimeout(function(){get_last_detections();}, 5000);
+    }).responseText;
+
+    $('.first-line').html(feedback);
+}

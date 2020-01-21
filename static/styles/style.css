@@ -100,6 +100,17 @@ html, body {
     color: green;
 }
 
+.second-line .employee-photo img {
+    width: 100px;
+}
+.second-line .employee-photo, .second-line .employee-name {
+    display: inline-block;
+    text-align: left;
+}
+.second-line .employee-name {
+    font-size: 16px;
+}
+
 @media screen and (max-width: 1200px) {
     #time {
         font-size: 40px;

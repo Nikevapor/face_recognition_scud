@@ -3,54 +3,47 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-    <div class="container-fluid">
-        <div class="row first-line">
-            <div class="col-8"><img src="{{ url_for('video_feed') }}" alt="">
-                <div id="time"></div>
-            </div>
-            {% if current_detected %}
-                <div class="col-4">
-                    <div class="employee-photo">
-                        {% if current_detected[2] %}
-                            <img src="{{ url_for('static',filename='data/' + current_detected[2]) }}" alt="">
-                        {% else %}
-                            <img src="{{ url_for('static',filename='images/png-employee-account-avatar-business-colleague-employee-female-group-human-512.png') }}"
-                                 alt="">
-                        {% endif %}
-                    </div>
-                    <div class="employee-info">
-                        <div class="employee-name">{{ current_detected[0] if current_detected[0] else "Неизвестный" }}</div>
-                        <div class="employee-position">{{ current_detected[1] if current_detected[1] else "" }}</div>
-                        <div class="recognition-info">
-                            Точность: 93%
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
+    <div class="row first-line">
+        <div class="col-8"><img src="{{ url_for('video_feed') }}" alt="">
+            <div id="time"></div>
         </div>
-        {% if last_four_detected %}
-            <div class="row second-line">
-                <div class="col-3">
-                    <div class="employee-photo">
-                        <img src="../static/images/droidcam-20191224-214717.jpg" alt="">
-                    </div>
+        {% if current_detected %}
+            <div class="col-4">
+                <div class="employee-photo">
+                    {% if current_detected[2] %}
+                        <img src="{{ url_for('static',filename='data/photos/' + current_detected[2]) }}" alt="">
+                    {% else %}
+                        <img src="{{ url_for('static',filename='images/png-employee-account-avatar-business-colleague-employee-female-group-human-512.png') }}"
+                             alt="">
+                    {% endif %}
                 </div>
-                <div class="col-3">
-                    <div class="employee-photo">
-                        <img src="../static/images/droidcam-20191224-214638.jpg" alt="">
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="employee-photo">
-                        <img src="../static/images/droidcam-20191125-220513.jpg" alt="">
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="employee-photo">
-                        <img src="../static/images/droidcam-20191224-214638.jpg" alt="">
+                <div class="employee-info">
+                    <div class="employee-name">{{ current_detected[0] if current_detected[0] else "Неизвестный" }}</div>
+                    <div class="employee-position">{{ current_detected[1] if current_detected[1] else "" }}</div>
+                    <div class="recognition-info">
+                        Точность: 93%
                     </div>
                 </div>
             </div>
         {% endif %}
     </div>
+    {% if last_four_detected %}
+        <div class="row second-line">
+            {% for detected in last_four_detected %}
+                <div class="col-3">
+                    <div class="employee-photo">
+                        {% if detected[2] %}
+                            <img src="{{ url_for('static',filename='data/photos/' + detected[2]) }}" alt="">
+                        {% else %}
+                            <img src="{{ url_for('static',filename='images/png-employee-account-avatar-business-colleague-employee-female-group-human-512.png') }}"
+                                 alt="">
+                        {% endif %}
+                    </div>
+                    <div class="employee-name">
+                        {{ detected[0] }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 {% endblock %}
